@@ -1,6 +1,6 @@
 from .base_copula import *
 
-class ClaytonCopula(BivariateCopula):
+class GumbelCopula(BivariateCopula):
     def __init__(self,
                  X=None,
                  Y=None,
@@ -12,17 +12,14 @@ class ClaytonCopula(BivariateCopula):
                         )
     @property
     def name(self):
-        return 'Clayton'
+        return 'Gumbel'
     
     def h(self, u=None, v=None):
         """h = dC/dv = P[U<u | V=v]
         """
-        return v ** (-self.theta-1) * self.A(u, v) ** (-1-1/self.theta)
-
-    def A(self, u, v):
-        """Helper function to define Clayton copula.
-        """
-        return np.max([u ** (-self.theta) + v ** (-self.theta) - 1.0, 0.0])
-
+        temp = ((-np.log(u)) ** self.theta + (-np.log(v)) ** self.theta)
+        return -np.exp(-temp ** (1/self.theta)) * (temp ** (1/self.theta-1)) * (-np.log(v)) ** (self.theta)/(v*np.log(v))
+        
     def C(self, u, v):
-        return self.A(u, v) ** (-1/self.theta)
+        return np.exp(-((-np.log(u)) ** self.theta + (-np.log(v)) ** self.theta) ** (1/self.theta))
+    

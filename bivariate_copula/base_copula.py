@@ -25,6 +25,11 @@ class BivariateCopula(abc.ABC):
         self._eps = eps
 
     @property
+    @abc.abstractmethod
+    def name(self):
+        pass
+            
+    @property
     def X(self):
         return self._X
     @X.setter
