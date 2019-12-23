@@ -162,6 +162,89 @@ class GBM(Ito_diffusion_1d):
     def vol(self, t, x) -> float:
         return self.vol_double * x
 
+class BMPeriodic(Ito_diffusion_1d):
+    """Instantiate Ito_diffusion to simulate a drifted Brownian motion
+    dX_t = drift_t*dt + vol_t*dW_t
+    where t -> drift_t and t -> vol_t are periodic functions.
+    """
+    def __init__(self,
+                 x0: float=0.0,
+                 T: float=1.0,
+                 scheme_steps: int=100,
+                 drift_freq: float=1.0,
+                 drift_phase: float=0.0,
+                 drift_amp: float=1.0,
+                 vol_freq: float=1.0,
+                 vol_phase: float=0.0,
+                 vol_amp: float=1.0,
+                 barrier=None,
+                 barrier_condition=None,
+                 noise_params: defaultdict=defaultdict(int),
+                 jump_params: defaultdict=defaultdict(int),
+                ) -> None:
+        super().__init__(x0=x0,
+                         T=T,
+                         scheme_steps=scheme_steps,
+                         barrier=barrier,
+                         barrier_condition=barrier_condition,
+                         noise_params=noise_params,
+                         jump_params=jump_params,
+                        )
+        self._drift_freq = np.float(drift_freq)
+        self._drift_phase = np.float(drift_phase)
+        self._drift_amp = np.float(drift_amp)
+        self._vol_freq = np.float(vol_freq)
+        self._vol_phase = np.float(vol_phase)
+        self._vol_amp = np.float(vol_amp)
+
+    @property
+    def drift_freq(self) -> float:
+        return self._drift_freq
+    @drift_freq.setter
+    def drift_freq(self, new_drift_freq) -> None:
+        self._drift_freq = new_drift_freq
+
+    @property
+    def drift_phase(self) -> float:
+        return self._drift_phase
+    @drift_phase.setter
+    def drift_phase(self, new_drift_phase) -> None:
+        self._drift_phase = new_drift_phase
+
+    @property
+    def drift_amp(self) -> float:
+        return self._drift_amp
+    @drift_amp.setter
+    def drift_amp(self, new_drift_amp) -> None:
+        self._drift_amp = new_drift_amp
+
+    @property
+    def vol_freq(self) -> float:
+        return self._vol_freq
+    @vol_freq.setter
+    def vol_freq(self, new_vol_freq) -> None:
+        self._vol_freq = new_vol_freq
+
+    @property
+    def vol_phase(self) -> float:
+        return self._vol_phase
+    @vol_phase.setter
+    def vol_phase(self, new_vol_phase) -> None:
+        self._vol_phase = new_vol_phase
+
+    @property
+    def vol_amp(self) -> float:
+        return self._vol_amp
+    @vol_amp.setter
+    def vol_amp(self, new_vol_amp) -> None:
+        self._vol_amp = new_vol_amp
+
+    def drift(self, t, x) -> float:
+        return self.drift_amp * np.sin(2*np.pi*self.drift_freq*t + self.drift_phase)
+
+    def vol(self, t, x) -> float:
+        return self.vol_amp * np.sin(2*np.pi*self.vol_freq*t + self.vol_phase)
+
 class SLN(Ito_diffusion_1d):
     """Instantiate Ito_diffusion to simulate a shifted lognormal diffusion
     dX_t = drift*X_t*dt + sigma*(shift*X_t+(mixing-shift)*X_0+(1-m)*L)*dW_t
