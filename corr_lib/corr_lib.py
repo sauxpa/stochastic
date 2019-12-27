@@ -28,7 +28,8 @@ def single_corr_matrix(n, rho):
     return np.ones(n)*rho+np.diag(np.ones((n,)))*(1-rho)
 
 
-def frechet_barycenter_corr(Ks, 
+def frechet_barycenter_corr(Ks,
+                            weights=[],
                             force_corr=False,
                             force_real=True,
                             niter=100, 
@@ -40,6 +41,9 @@ def frechet_barycenter_corr(Ks,
     Gaussian measures N(0, K) for K in Ks, w.r.t 2-Wasserstein distance.
     K^{t+1} = ( \sum_K (K^t * K * K^t) ** 0.5 ) ** 0.5
     
+    Ks: list of matrices to average,
+    weights: array of length len(Ks) of nonnegative numbers summing to 1; 
+        defaults to uniform weights,
     force_corr: if True, renormalize the final iterate to make a correlation matrix
     (by default the iterations produce covariance matrices, but not necessarily correlation ones,
     even when all matrices in Ks are correlation matrices),
@@ -48,36 +52,39 @@ def frechet_barycenter_corr(Ks,
     niter: maximum number of iterations,
     tol: stopping threshold on the distance between consecutive updates,
     ord: order of the norm to compute distance for tol (default: L2);
-            if ord='wasserstein', use the 2-Wasserstein distance between Gaussians,
+        if ord='wasserstein', use the 2-Wasserstein distance between Gaussians,
     verbose: if True, store successive errors and returns them.
     """
     # initialize barycenter to the Euclidean average of Ks.
-    Kbar_sqrt = np.mean(Ks, axis=0)
+    Kbar = np.mean(Ks, axis=0)
     if verbose:
         errs = []
 
+    if len(weights) == 0:
+        weights = np.ones(len(Ks))*1/len(Ks)
+    else:
+        weights = np.array(weights)
+        
     for _ in range(niter):
-        Kbar_sqrt_new = sqrtm(np.sum([sqrtm(np.dot(Kbar_sqrt, np.dot(K, Kbar_sqrt))) for K in Ks], axis=0))
+        Kbar_new = np.sum([w*sqrtm(np.dot(sqrtm(Kbar), np.dot(K, sqrtm(Kbar)))) for w, K in zip(weights, Ks)], axis=0)
         if force_real:
-            Kbar_sqrt_new = np.real(Kbar_sqrt_new)
+            Kbar_new = np.real(Kbar_new)
         
         if ord == 'wasserstein':
             # 2-Wasserstein distance between centered Gaussian
             # is the Frobenius norm of the difference of the square
             # root of their covariance matrices
-            err = norm(Kbar_sqrt_new-Kbar_sqrt, ord='fro')
+            err = norm(Kbar_new-Kbar, ord='fro')
         else:
-            err = norm(Kbar_sqrt_new-Kbar_sqrt, ord=ord)
+            err = norm(Kbar_new-Kbar, ord=ord)
         
         if verbose:
             errs.append(err)
         
-        Kbar_sqrt = Kbar_sqrt_new
+        Kbar = Kbar_new
         
         if err < tol:
             break
-    
-    Kbar = np.dot(Kbar_sqrt, Kbar_sqrt)
     
     if force_corr:
         D_inv = 1/np.sqrt(np.diag(Kbar))
