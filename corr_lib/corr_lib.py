@@ -1,5 +1,5 @@
 import numpy as np
-from scipy.linalg import sqrtm, norm
+from scipy.linalg import sqrtm, norm, inv
 
 
 def random_corr_matrix(n, id_mixing = 0, gen=np.random.rand):
@@ -66,10 +66,12 @@ def frechet_barycenter_corr(Ks,
         weights = np.array(weights)
         
     for _ in range(niter):
-        Kbar_new = np.sum([w*sqrtm(np.dot(sqrtm(Kbar), np.dot(K, sqrtm(Kbar)))) for w, K in zip(weights, Ks)], axis=0)
+        Kbar_sqrt = sqrtm(Kbar)
+        Kbar_new = np.sum([w*sqrtm(np.dot(Kbar_sqrt, np.dot(K, Kbar_sqrt))) for w, K in zip(weights, Ks)], axis=0)
+        
         if force_real:
             Kbar_new = np.real(Kbar_new)
-        
+    
         if ord == 'wasserstein':
             # 2-Wasserstein distance between centered Gaussian
             # is the Frobenius norm of the difference of the square
