@@ -22,7 +22,7 @@ def single_corr_matrix(n, rho):
     """
     Returns a correlation matrix where all variable have same correlation rho
     """
-    if rho < 0.0 or rho >1.0:
+    if rho < -1.0 or rho >1.0:
         raise NameError('Rho is a correlation and therefore must be between 0 and 1')
 
     return np.ones(n)*rho+np.diag(np.ones((n,)))*(1-rho)
