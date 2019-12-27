@@ -3,6 +3,9 @@
 ### bivariate_copula
 Code for simulating joint distribution based on a copula and empirical marginals.
 
+### corr_lib
+Study Frechet barycenter w.r.t Wasserstein distance for correlation matrix metric.
+
 ### ito_diffusions and ito_diffusions_examples
 Libraries for stochastic processes simulation and visualization including:
 * Ito diffusion : Brownian motion, Geometric Brownian motion, Vasicek, CIR...
