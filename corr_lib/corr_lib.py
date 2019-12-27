@@ -22,7 +22,7 @@ def single_corr_matrix(n, rho):
     """
     Returns a correlation matrix where all variable have same correlation rho
     """
-    if rho < -1.0 or rho >1.0:
+    if rho < 0.0 or rho >1.0:
         raise NameError('Rho is a correlation and therefore must be between 0 and 1')
 
     return np.ones(n)*rho+np.diag(np.ones((n,)))*(1-rho)
@@ -30,10 +30,11 @@ def single_corr_matrix(n, rho):
 
 def frechet_barycenter_corr(Ks, 
                             force_corr=False,
+                            force_real=True,
                             niter=100, 
                             tol=1e-8, 
                             ord=2, 
-                            verbose=False
+                            verbose=False,
                            ):
     """Compute iteratively the Frechet barycenter of
     Gaussian measures N(0, K) for K in Ks, w.r.t 2-Wasserstein distance.
@@ -42,6 +43,8 @@ def frechet_barycenter_corr(Ks,
     force_corr: if True, renormalize the final iterate to make a correlation matrix
     (by default the iterations produce covariance matrices, but not necessarily correlation ones,
     even when all matrices in Ks are correlation matrices),
+    force_real : if True, remove imaginary part at each iteration; these can appear due to
+    numerical instability when taking the square root (usually for low/negative correlations).
     niter: maximum number of iterations,
     tol: stopping threshold on the distance between consecutive updates,
     ord: order of the norm to compute distance for tol (default: L2);
@@ -55,6 +58,8 @@ def frechet_barycenter_corr(Ks,
 
     for _ in range(niter):
         Kbar_sqrt_new = sqrtm(np.sum([sqrtm(np.dot(Kbar_sqrt, np.dot(K, Kbar_sqrt))) for K in Ks], axis=0))
+        if force_real:
+            Kbar_sqrt_new = np.real(Kbar_sqrt_new)
         
         if ord == 'wasserstein':
             # 2-Wasserstein distance between centered Gaussian
