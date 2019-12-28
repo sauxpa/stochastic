@@ -1,31 +1,7 @@
 import numpy as np
-from scipy.linalg import sqrtm, norm, inv
-
-
-def random_corr_matrix(n, id_mixing = 0, gen=np.random.rand):
-    """
-    Draws a random correlation matrix (symmetric positive semidefinite
-    from a seed matrix sampled from gen).
-    This procedure tends to produce high correlation, id_mixing pulls
-    the resulting matrix closer to the independent variables case
-    (i.e identity correlation matrix).
-    """
-    C = gen(n, n)
-    C = np.dot(C, C.T)
-    std_dev = np.sqrt(np.diag(C))
-    std_dev_inv = np.diag(1/std_dev)
-    corr = np.matmul(std_dev_inv, np.matmul(C, std_dev_inv))
-    return (1-id_mixing)*corr+id_mixing*np.eye(n)
-
-
-def single_corr_matrix(n, rho):
-    """
-    Returns a correlation matrix where all variable have same correlation rho
-    """
-    if rho < 0.0 or rho >1.0:
-        raise NameError('Rho is a correlation and therefore must be between 0 and 1')
-
-    return np.ones(n)*rho+np.diag(np.ones((n,)))*(1-rho)
+from scipy.linalg import sqrtm, norm
+from scipy.spatial import distance_matrix
+import cvxpy as cp
 
 
 def frechet_barycenter_corr(Ks,
@@ -89,10 +65,72 @@ def frechet_barycenter_corr(Ks,
             break
     
     if force_corr:
-        D_inv = 1/np.sqrt(np.diag(Kbar))
-        Kbar = np.multiply(D_inv, np.multiply(Kbar, D_inv))
+        Kbar = cov2corr(Kbar)
             
     if verbose:
         return Kbar, errs
     else:
         return Kbar
+
+    
+def empirical_frechet_barycenter(cloud_points, 
+                                 cloud_weights, 
+                                 bar_weights=[],
+                                 niter=10000,
+                                 eps_abs=1e-5,
+                                 eps_rel=1e-5,
+                                 verbose=False,
+                                ):
+    """Calculation of Frechet barycenter w.r.t Wasserstein distance
+    of discrete measures by solving the minimization problem.
+    
+    cloud_points: (T,N) point clouds,
+    cloud_weights: list of k mass distributions,
+    bar_weights: list of nonnegative weights summing to 1 in the barycenter computation;
+        defaults to uniform weights,
+    niter: maximum number of iterations,
+    eps_abs: absolute tolerance,
+    eps_rel: relative tolerance,
+    verbose: print cvxpy info if True.
+    """         
+    k = cloud_weights.shape[1]
+    T, N = cloud_points.shape
+
+    if len(bar_weights) == 0:
+        bar_weights = np.ones(k)/k
+    
+    # distance matrix on the point cloud
+    D = distance_matrix(cloud_points, cloud_points)
+    
+    ### Add variables
+    
+    # optimal transport plan
+    pi = []
+    # for the epigraph formulation of the minimization problem
+    t = []
+    # barycenter weights
+    mu = cp.Variable(T, nonneg = True)
+    for i in range(k):
+        pi.append(cp.Variable((T, T), nonneg = True))
+        t.append(bar_weights[i]*cp.Variable(nonneg = True))
+
+    obj = cp.Minimize(np.sum(t))
+
+    ### Add constraints
+    Cons = []
+    for i in range(k):
+        # epigraph formulation
+        Cons.append( t[i] >= cp.sum(cp.multiply(D, pi[i])) )
+        # marginal to barycenter
+        Cons.append( (np.ones(T) @ pi[i]).T == mu)
+        # marginal to cloud_weights
+        Cons.append( (pi[i] @ np.ones(T)) == cloud_weights[:, i])
+
+    prob = cp.Problem(obj, constraints= Cons)
+    result = prob.solve(verbose=verbose, 
+                        max_iter=niter, 
+                        eps_abs=eps_abs,
+                        eps_rel=eps_rel,
+                       )
+        
+    return mu.value
