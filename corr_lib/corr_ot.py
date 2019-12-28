@@ -2,7 +2,7 @@ import numpy as np
 from scipy.linalg import sqrtm, norm
 from scipy.spatial import distance_matrix
 import cvxpy as cp
-
+from .utils import *
 
 def frechet_barycenter_corr(Ks,
                             weights=[],
