@@ -19,6 +19,7 @@ Study Frechet barycenter w.r.t Wasserstein distance for correlation matrix metri
 * compute geodesic on the covariance manifold using weighted Frechet barycenter, and show that it is not a geodesic on the correlation manifold (matrices on the geodesic path between two correlation matrices within the covariance manifold need not be correlation matrices themselves).
 * compute the metric induced on empirical correlations by a Wasserstein distance on the discrete measures, by solving Frechet barycenter problem as a linear program using CVXPY.
 
+Examples on synthetic, random matrices and historical SPX correlations.
 
 ### ou_fitting
 Fit a Ornstein-Uhlenbeck process (potentially with Laplace jumps) on historical data using the generalized methods of moments on the characteristic functon.
