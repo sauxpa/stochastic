@@ -10,5 +10,7 @@ Libraries for stochastic processes simulation and visualization including:
 * Multidimensional processes, stochastic volatility diffusions (SABR...)
 * Fractional Brownian motion, Karhunen-Loeve expansion, fractional diffusions
 
+**To install** : clone repo and pip install -e ito_diffusions/
+
 ### ou_fitting
 Fit a Ornstein-Uhlenbeck process (potentially with Laplace jumps) on historical data using the generalized methods of moments on the characteristic functon.
