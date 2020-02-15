@@ -12,5 +12,10 @@ Libraries for stochastic processes simulation and visualization including:
 
 **To install** : clone repo and pip install -e ito_diffusions/
 
+
+<img src="./examples/ito_diffusions_examples/brownian_sheaf.png"
+     style="float: left; margin-right: 10px;" />
+
+
 ### ou_fitting
 Fit a Ornstein-Uhlenbeck process (potentially with Laplace jumps) on historical data using the generalized methods of moments on the characteristic functon.
