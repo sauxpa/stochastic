@@ -485,7 +485,7 @@ class BlackKarasinski(Vasicek):
                  noise_params: defaultdict = defaultdict(int),
                  jump_params: defaultdict = defaultdict(int),
                  ) -> None:
-        super().__init__(x0,
+        super().__init__(np.log(x0),
                          T,
                          scheme_steps,
                          mean_reversion=mean_reversion,

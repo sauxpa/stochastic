@@ -262,7 +262,7 @@ class BlackKarasinski_multi_d(Vasicek_multi_d):
                  barrier_condition: np.ndarray = np.full(1, None)
                  ) -> None:
 
-        super().__init__(x0=x0,
+        super().__init__(x0=np.log(x0),
                          T=T,
                          scheme_steps=scheme_steps,
                          mean_reversion=mean_reversion,
