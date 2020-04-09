@@ -1,29 +1,22 @@
-#!/usr/bin/env python
-# coding: utf-8
-
-from .ito_diffusion import *
-from .noise import *
-
 import numpy as np
 from numpy import random as rd
 import pandas as pd
 import abc
 from functools import lru_cache
-from collections import defaultdict, deque
-from scipy.stats import poisson
+from collections import defaultdict
+from .ito_diffusion import Ito_diffusion
 
-## 1d diffusions
 
 class Ito_diffusion_1d(Ito_diffusion):
     def __init__(self,
-                 x0: float=0.0,
-                 T: float=1.0,
-                 scheme_steps: int=100,
-                 barrier=None,
-                 barrier_condition=None,
-                 noise_params: defaultdict=defaultdict(int),
-                 jump_params: defaultdict=defaultdict(int),
-                ) -> None:
+                 x0: float = 0.0,
+                 T: float = 1.0,
+                 scheme_steps: int = 100,
+                 barrier: None = None,
+                 barrier_condition: None = None,
+                 noise_params: defaultdict = defaultdict(int),
+                 jump_params: defaultdict = defaultdict(int),
+                 ) -> None:
         super().__init__(x0=x0,
                          T=T,
                          scheme_steps=scheme_steps,
@@ -31,7 +24,7 @@ class Ito_diffusion_1d(Ito_diffusion):
                          barrier_condition=barrier_condition,
                          noise_params=noise_params,
                          jump_params=jump_params,
-                        )
+                         )
 
     def simulate(self) -> pd.DataFrame:
         """Euler-Maruyama scheme
@@ -50,16 +43,19 @@ class Ito_diffusion_1d(Ito_diffusion):
                 z = noises[i]
 
             previous_step = last_step
-            last_step += self.drift(t, last_step) * self.scheme_step + self.vol(t, last_step) * z
+            last_step += self.drift(t, last_step) * self.scheme_step\
+                + self.vol(t, last_step) * z
 
             if self.has_jumps:
                 intensity = self.jump_intensity_func(t, previous_step)
                 N = rd.poisson(intensity*self.scheme_step)
                 last_step += N*self.jump_size_distr.rvs()
 
-            if self.barrier_condition == 'absorb'\
-            and self.barrier != None\
-            and self.barrier_crossed(previous_step, last_step, self.barrier):
+            if (self.barrier_condition == 'absorb'
+                and self.barrier is not None
+                and self.barrier_crossed(previous_step,
+                                         last_step,
+                                         self.barrier)):
                 last_step = self.barrier
 
             x.append(last_step)
@@ -68,22 +64,23 @@ class Ito_diffusion_1d(Ito_diffusion):
         df.index = self.time_steps
         return df
 
+
 class BM(Ito_diffusion_1d):
     """Instantiate Ito_diffusion to simulate a drifted Brownian motion
     dX_t = drift*dt + vol*dW_t
     where drift and vol are real numbers
     """
     def __init__(self,
-                 x0: float=0.0,
-                 T: float=1.0,
-                 scheme_steps: int=100,
-                 drift: float=0.0,
-                 vol: float=1.0,
-                 barrier=None,
-                 barrier_condition=None,
-                 noise_params: defaultdict=defaultdict(int),
-                 jump_params: defaultdict=defaultdict(int),
-                ) -> None:
+                 x0: float = 0.0,
+                 T: float = 1.0,
+                 scheme_steps: int = 100,
+                 drift: float = 0.0,
+                 vol: float = 1.0,
+                 barrier: None = None,
+                 barrier_condition: None = None,
+                 noise_params: defaultdict = defaultdict(int),
+                 jump_params: defaultdict = defaultdict(int),
+                 ) -> None:
         super().__init__(x0=x0,
                          T=T,
                          scheme_steps=scheme_steps,
@@ -91,13 +88,14 @@ class BM(Ito_diffusion_1d):
                          barrier_condition=barrier_condition,
                          noise_params=noise_params,
                          jump_params=jump_params,
-                        )
+                         )
         self._drift_double = np.float(drift)
         self._vol_double = np.float(vol)
 
     @property
     def drift_double(self) -> float:
         return self._drift_double
+
     @drift_double.setter
     def drift_double(self, new_drift) -> None:
         self._drift_double = new_drift
@@ -105,6 +103,7 @@ class BM(Ito_diffusion_1d):
     @property
     def vol_double(self) -> float:
         return self._vol_double
+
     @vol_double.setter
     def vol_double(self, new_vol) -> None:
         self._vol_double = new_vol
@@ -115,22 +114,23 @@ class BM(Ito_diffusion_1d):
     def vol(self, t, x) -> float:
         return self.vol_double
 
+
 class GBM(Ito_diffusion_1d):
     """Instantiate Ito_diffusion to simulate a geometric Brownian motion
     dX_t = drift*X_t*dt + vol*X_t*dW_t
     where drift and vol are real numbers
     """
     def __init__(self,
-                 x0: float=1.0,
-                 T: float=1.0,
-                 scheme_steps: int=100,
-                 drift: float=0.0,
-                 vol: float=1.0,
-                 barrier=None,
-                 barrier_condition=None,
-                 noise_params: defaultdict=defaultdict(int),
-                 jump_params: defaultdict=defaultdict(int),
-                ) -> None:
+                 x0: float = 1.0,
+                 T: float = 1.0,
+                 scheme_steps: int = 100,
+                 drift: float = 0.0,
+                 vol: float = 1.0,
+                 barrier: None = None,
+                 barrier_condition: None = None,
+                 noise_params: defaultdict = defaultdict(int),
+                 jump_params: defaultdict = defaultdict(int),
+                 ) -> None:
         super().__init__(x0,
                          T,
                          scheme_steps,
@@ -138,13 +138,14 @@ class GBM(Ito_diffusion_1d):
                          barrier_condition=barrier_condition,
                          noise_params=noise_params,
                          jump_params=jump_params,
-                        )
+                         )
         self._drift_double = np.float(drift)
         self._vol_double = np.float(vol)
 
     @property
     def drift_double(self) -> float:
         return self._drift_double
+
     @drift_double.setter
     def drift_double(self, new_drift) -> None:
         self._drift_double = new_drift
@@ -152,6 +153,7 @@ class GBM(Ito_diffusion_1d):
     @property
     def vol_double(self) -> float:
         return self._vol_double
+
     @vol_double.setter
     def vol_double(self, new_vol) -> None:
         self._vol_double = new_vol
@@ -162,26 +164,27 @@ class GBM(Ito_diffusion_1d):
     def vol(self, t, x) -> float:
         return self.vol_double * x
 
+
 class BMPeriodic(Ito_diffusion_1d):
     """Instantiate Ito_diffusion to simulate a drifted Brownian motion
     dX_t = drift_t*dt + vol_t*dW_t
     where t -> drift_t and t -> vol_t are periodic functions.
     """
     def __init__(self,
-                 x0: float=0.0,
-                 T: float=1.0,
-                 scheme_steps: int=100,
-                 drift_freq: float=1.0,
-                 drift_phase: float=0.0,
-                 drift_amp: float=1.0,
-                 vol_freq: float=1.0,
-                 vol_phase: float=0.0,
-                 vol_amp: float=1.0,
-                 barrier=None,
-                 barrier_condition=None,
-                 noise_params: defaultdict=defaultdict(int),
-                 jump_params: defaultdict=defaultdict(int),
-                ) -> None:
+                 x0: float = 0.0,
+                 T: float = 1.0,
+                 scheme_steps: int = 100,
+                 drift_freq: float = 1.0,
+                 drift_phase: float = 0.0,
+                 drift_amp: float = 1.0,
+                 vol_freq: float = 1.0,
+                 vol_phase: float = 0.0,
+                 vol_amp: float = 1.0,
+                 barrier: None = None,
+                 barrier_condition: None = None,
+                 noise_params: defaultdict = defaultdict(int),
+                 jump_params: defaultdict = defaultdict(int),
+                 ) -> None:
         super().__init__(x0=x0,
                          T=T,
                          scheme_steps=scheme_steps,
@@ -189,7 +192,7 @@ class BMPeriodic(Ito_diffusion_1d):
                          barrier_condition=barrier_condition,
                          noise_params=noise_params,
                          jump_params=jump_params,
-                        )
+                         )
         self._drift_freq = np.float(drift_freq)
         self._drift_phase = np.float(drift_phase)
         self._drift_amp = np.float(drift_amp)
@@ -200,6 +203,7 @@ class BMPeriodic(Ito_diffusion_1d):
     @property
     def drift_freq(self) -> float:
         return self._drift_freq
+
     @drift_freq.setter
     def drift_freq(self, new_drift_freq) -> None:
         self._drift_freq = new_drift_freq
@@ -207,6 +211,7 @@ class BMPeriodic(Ito_diffusion_1d):
     @property
     def drift_phase(self) -> float:
         return self._drift_phase
+
     @drift_phase.setter
     def drift_phase(self, new_drift_phase) -> None:
         self._drift_phase = new_drift_phase
@@ -214,6 +219,7 @@ class BMPeriodic(Ito_diffusion_1d):
     @property
     def drift_amp(self) -> float:
         return self._drift_amp
+
     @drift_amp.setter
     def drift_amp(self, new_drift_amp) -> None:
         self._drift_amp = new_drift_amp
@@ -221,6 +227,7 @@ class BMPeriodic(Ito_diffusion_1d):
     @property
     def vol_freq(self) -> float:
         return self._vol_freq
+
     @vol_freq.setter
     def vol_freq(self, new_vol_freq) -> None:
         self._vol_freq = new_vol_freq
@@ -228,6 +235,7 @@ class BMPeriodic(Ito_diffusion_1d):
     @property
     def vol_phase(self) -> float:
         return self._vol_phase
+
     @vol_phase.setter
     def vol_phase(self, new_vol_phase) -> None:
         self._vol_phase = new_vol_phase
@@ -235,15 +243,19 @@ class BMPeriodic(Ito_diffusion_1d):
     @property
     def vol_amp(self) -> float:
         return self._vol_amp
+
     @vol_amp.setter
     def vol_amp(self, new_vol_amp) -> None:
         self._vol_amp = new_vol_amp
 
     def drift(self, t, x) -> float:
-        return self.drift_amp * np.sin(2*np.pi*self.drift_freq*t + self.drift_phase)
+        return self.drift_amp * np.sin(
+            2*np.pi*self.drift_freq*t + self.drift_phase
+            )
 
     def vol(self, t, x) -> float:
         return self.vol_amp * np.sin(2*np.pi*self.vol_freq*t + self.vol_phase)
+
 
 class SLN(Ito_diffusion_1d):
     """Instantiate Ito_diffusion to simulate a shifted lognormal diffusion
@@ -251,19 +263,19 @@ class SLN(Ito_diffusion_1d):
     where drift and vol are real numbers
     """
     def __init__(self,
-                 x0: float=1.0,
-                 T: float=1.0,
-                 scheme_steps: int=100,
-                 drift: float=0.0,
-                 sigma: float =0.0,
-                 shift: float=0.0,
-                 mixing: float=0.0,
-                 L: float=0.0,
-                 barrier=None,
-                 barrier_condition=None,
-                 noise_params: defaultdict=defaultdict(int),
-                 jump_params: defaultdict=defaultdict(int),
-                ) -> None:
+                 x0: float = 1.0,
+                 T: float = 1.0,
+                 scheme_steps: int = 100,
+                 drift: float = 0.0,
+                 sigma: float = 0.0,
+                 shift: float = 0.0,
+                 mixing: float = 0.0,
+                 L: float = 0.0,
+                 barrier: None = None,
+                 barrier_condition: None = None,
+                 noise_params: defaultdict = defaultdict(int),
+                 jump_params: defaultdict = defaultdict(int),
+                 ) -> None:
         super().__init__(x0,
                          T,
                          scheme_steps,
@@ -271,7 +283,7 @@ class SLN(Ito_diffusion_1d):
                          barrier_condition=barrier_condition,
                          noise_params=noise_params,
                          jump_params=jump_params,
-                        )
+                         )
         self._drift_double = drift
         self._sigma = sigma
         self._shift = shift
@@ -281,6 +293,7 @@ class SLN(Ito_diffusion_1d):
     @property
     def drift_double(self) -> float:
         return self._drift_double
+
     @drift_double.setter
     def drift_double(self, new_drift) -> None:
         self._drift_double = new_drift
@@ -288,6 +301,7 @@ class SLN(Ito_diffusion_1d):
     @property
     def sigma(self) -> float:
         return self._sigma
+
     @sigma.setter
     def sigma(self, new_sigma) -> None:
         self._sigma = float(new_sigma)
@@ -295,6 +309,7 @@ class SLN(Ito_diffusion_1d):
     @property
     def shift(self) -> float:
         return self._shift
+
     @shift.setter
     def shift(self, new_shift) -> None:
         self._shift = new_shift
@@ -302,6 +317,7 @@ class SLN(Ito_diffusion_1d):
     @property
     def mixing(self) -> float:
         return self._mixing
+
     @mixing.setter
     def mixing(self, new_mixing) -> None:
         self._mixing = new_mixing
@@ -309,6 +325,7 @@ class SLN(Ito_diffusion_1d):
     @property
     def L(self) -> float:
         return self._L
+
     @L.setter
     def L(self, new_L) -> None:
         self._L = new_L
@@ -317,7 +334,11 @@ class SLN(Ito_diffusion_1d):
         return self.drift_double * x
 
     def vol(self, t, x) -> float:
-        return self.sigma*(self.shift*x+(self.mixing-self.shift)*self.x0+(1-self.mixing)*self.L)
+        return self.sigma * (
+            self.shift * x + (self.mixing - self.shift) * self.x0
+            + (1 - self.mixing) * self.L
+            )
+
 
 class Vasicek(Ito_diffusion_1d):
     """Instantiate Ito_diffusion to simulate a mean-reverting Vasicek diffusion
@@ -325,17 +346,17 @@ class Vasicek(Ito_diffusion_1d):
     where mean_reversion, long_term and vol are real numbers
     """
     def __init__(self,
-                 x0: float=1.0,
-                 T: float=1.0,
-                 scheme_steps: int=100,
-                 mean_reversion: float=1.0,
-                 long_term: float=0.0,
-                 vol: float=1.0,
-                 barrier=None,
-                 barrier_condition=None,
-                 noise_params: defaultdict=defaultdict(int),
-                 jump_params: defaultdict=defaultdict(int),
-                ) -> None:
+                 x0: float = 1.0,
+                 T: float = 1.0,
+                 scheme_steps: int = 100,
+                 mean_reversion: float = 1.0,
+                 long_term: float = 0.0,
+                 vol: float = 1.0,
+                 barrier: None = None,
+                 barrier_condition: None = None,
+                 noise_params: defaultdict = defaultdict(int),
+                 jump_params: defaultdict = defaultdict(int),
+                 ) -> None:
         super().__init__(x0,
                          T,
                          scheme_steps,
@@ -343,7 +364,7 @@ class Vasicek(Ito_diffusion_1d):
                          barrier_condition=barrier_condition,
                          noise_params=noise_params,
                          jump_params=jump_params,
-                        )
+                         )
         self._mean_reversion = np.float(mean_reversion)
         self._long_term = np.float(long_term)
         self._vol_double = np.float(vol)
@@ -351,6 +372,7 @@ class Vasicek(Ito_diffusion_1d):
     @property
     def mean_reversion(self) -> float:
         return self._mean_reversion
+
     @mean_reversion.setter
     def mean_reversion(self, new_mean_reversion) -> None:
         self._mean_reversion = new_mean_reversion
@@ -358,6 +380,7 @@ class Vasicek(Ito_diffusion_1d):
     @property
     def long_term(self) -> float:
         return self._long_term
+
     @long_term.setter
     def long_term(self, new_long_term) -> None:
         self._long_term = new_long_term
@@ -365,6 +388,7 @@ class Vasicek(Ito_diffusion_1d):
     @property
     def vol_double(self) -> float:
         return self._vol_double
+
     @vol_double.setter
     def vol_double(self, new_vol) -> None:
         self._vol_double = new_vol
@@ -375,23 +399,24 @@ class Vasicek(Ito_diffusion_1d):
     def vol(self, t, x) -> float:
         return self.vol_double
 
+
 class CIR(Ito_diffusion_1d):
     """Instantiate Ito_diffusion to simulate a mean-reverting CIR diffusion
     dX_t = mean_reversion*(long_term-X_t)*dt + vol*sqrt(X_t)*dW_t
     where mean_reversion, long_term and vol are real numbers
     """
     def __init__(self,
-                 x0: float=1.0,
-                 T: float=1.0,
-                 scheme_steps: int=100,
-                 mean_reversion: float=1.0,
-                 long_term: float=0.0,
-                 vol: float=1.0,
-                 barrier=None,
-                 barrier_condition=None,
-                 noise_params: defaultdict=defaultdict(int),
-                 jump_params: defaultdict=defaultdict(int),
-                ) -> None:
+                 x0: float = 1.0,
+                 T: float = 1.0,
+                 scheme_steps: int = 100,
+                 mean_reversion: float = 1.0,
+                 long_term: float = 0.0,
+                 vol: float = 1.0,
+                 barrier: None = None,
+                 barrier_condition: None = None,
+                 noise_params: defaultdict = defaultdict(int),
+                 jump_params: defaultdict = defaultdict(int),
+                 ) -> None:
         super().__init__(x0,
                          T,
                          scheme_steps,
@@ -399,7 +424,7 @@ class CIR(Ito_diffusion_1d):
                          barrier_condition=barrier_condition,
                          noise_params=noise_params,
                          jump_params=jump_params,
-                        )
+                         )
         self._mean_reversion = np.float(mean_reversion)
         self._long_term = np.float(long_term)
         self._vol_double = np.float(vol)
@@ -407,6 +432,7 @@ class CIR(Ito_diffusion_1d):
     @property
     def mean_reversion(self) -> float:
         return self._mean_reversion
+
     @mean_reversion.setter
     def mean_reversion(self, new_mean_reversion) -> None:
         self._mean_reversion = new_mean_reversion
@@ -414,6 +440,7 @@ class CIR(Ito_diffusion_1d):
     @property
     def long_term(self) -> float:
         return self._long_term
+
     @long_term.setter
     def long_term(self, new_long_term) -> None:
         self._long_term = new_long_term
@@ -421,6 +448,7 @@ class CIR(Ito_diffusion_1d):
     @property
     def vol_double(self) -> float:
         return self._vol_double
+
     @vol_double.setter
     def vol_double(self, new_vol) -> None:
         self._vol_double = new_vol
@@ -437,35 +465,37 @@ class CIR(Ito_diffusion_1d):
     def vol(self, t, x) -> float:
         return self.vol_double * np.sqrt(x)
 
+
 class pseudo_GBM(Ito_diffusion_1d):
     """Instantiate Ito_diffusion to simulate
     dX_t = drift*dt + vol*X_t*dW_t
     where r and vol are real numbers
     """
     def __init__(self,
-                 x0: float=1.0,
-                 T: float=1.0,
-                 scheme_steps: int=100,
-                 drift: float=0.0,
-                 vol: float=1.0,
-                 barrier=None,
-                 barrier_condition=None,
-                 noise_params: defaultdict=defaultdict(int),
-                 jump_params: defaultdict=defaultdict(int),
-                ) -> None:
+                 x0: float = 1.0,
+                 T: float = 1.0,
+                 scheme_steps: int = 100,
+                 drift: float = 0.0,
+                 vol: float = 1.0,
+                 barrier: None = None,
+                 barrier_condition: None = None,
+                 noise_params: defaultdict = defaultdict(int),
+                 jump_params: defaultdict = defaultdict(int),
+                 ) -> None:
         super().__init__(x0,
                          T,
                          scheme_steps,
                          barrier=barrier,
                          barrier_condition=barrier_condition,
                          noise_params=noise_params
-                        )
+                         )
         self._drift_double = np.float(drift)
         self._vol_double = np.float(vol)
 
     @property
     def drift_double(self) -> float:
         return self._drift_double
+
     @drift_double.setter
     def drift_double(self, new_drift) -> None:
         self._drift_double = new_drift
@@ -473,6 +503,7 @@ class pseudo_GBM(Ito_diffusion_1d):
     @property
     def vol_double(self) -> float:
         return self._vol_double
+
     @vol_double.setter
     def vol_double(self, new_vol) -> None:
         self._vol_double = new_vol
@@ -483,31 +514,33 @@ class pseudo_GBM(Ito_diffusion_1d):
     def vol(self, t, x) -> float:
         return self.vol_double*x
 
+
 class Pinned_diffusion(Ito_diffusion_1d):
-    """Generic class for pinned diffusions, i.e diffusions which are constrained to arrive
-    at a given point at the terminal date.
+    """Generic class for pinned diffusions, i.e diffusions which are
+    constrained to arrive at a given point at the terminal date.
     """
     def __init__(self,
-                 x0: float=0.0,
-                 T: float=1.0,
-                 scheme_steps: int=100,
-                 alpha: float=1.0,
-                 vol: float=1.0,
-                 pin: float=0.0,
-                 noise_params: defaultdict=defaultdict(int),
-                 jump_params: defaultdict=defaultdict(int),
-                ) -> None:
+                 x0: float = 0.0,
+                 T: float = 1.0,
+                 scheme_steps: int = 100,
+                 alpha: float = 1.0,
+                 vol: float = 1.0,
+                 pin: float = 0.0,
+                 noise_params: defaultdict = defaultdict(int),
+                 jump_params: defaultdict = defaultdict(int),
+                 ) -> None:
         super().__init__(x0=x0,
                          T=T,
                          scheme_steps=scheme_steps,
                          noise_params=noise_params,
                          jump_params=jump_params,
-                        )
+                         )
         self._pin = np.float(pin)
 
     @property
     def pin(self) -> float:
         return self._pin
+
     @pin.setter
     def pin(self, new_pin) -> None:
         self._pin = new_pin
@@ -520,7 +553,7 @@ class Pinned_diffusion(Ito_diffusion_1d):
         """In a pinned diffusion, drift is written as
         h(t)*(y-x)
         """
-        if( t == self.T ):
+        if t == self.T:
             return 0.0
         else:
             return self._h(t) * (self.pin - x)
@@ -536,11 +569,14 @@ class Pinned_diffusion(Ito_diffusion_1d):
             last_step = self.x0
             backbone = [last_step]
             for t in self.time_steps[1:]:
-                last_step += self._h(t) * (self.pin-last_step) * self.scheme_step
+                last_step += self._h(t) * (
+                    self.pin - last_step
+                    ) * self.scheme_step
                 backbone.append(last_step)
             df['backbone'] = backbone
 
         return df
+
 
 class Alpha_pinned_BM(Pinned_diffusion):
     """Instantiate Ito_diffusion to simulate an alpha-pinned Brownian motion
@@ -548,28 +584,29 @@ class Alpha_pinned_BM(Pinned_diffusion):
     where alpha, y (pin) and vol are real numbers
     """
     def __init__(self,
-                 x0: float=0.0,
-                 T: float=1.0,
-                 scheme_steps: int=100,
-                 alpha: float=1.0,
-                 vol: float=1.0,
-                 pin: float=0.0,
-                 noise_params: defaultdict=defaultdict(int),
-                 jump_params: defaultdict=defaultdict(int),
-                ) -> None:
+                 x0: float = 0.0,
+                 T: float = 1.0,
+                 scheme_steps: int = 100,
+                 alpha: float = 1.0,
+                 vol: float = 1.0,
+                 pin: float = 0.0,
+                 noise_params: defaultdict = defaultdict(int),
+                 jump_params: defaultdict = defaultdict(int),
+                 ) -> None:
         super().__init__(x0=x0,
                          T=T,
                          scheme_steps=scheme_steps,
                          pin=pin,
                          noise_params=noise_params,
                          jump_params=jump_params,
-                        )
+                         )
         self._alpha = np.float(alpha)
         self._vol_double = np.float(vol)
 
     @property
     def alpha(self) -> float:
         return self._alpha
+
     @alpha.setter
     def alpha(self, new_alpha) -> None:
         self._alpha = new_alpha
@@ -577,18 +614,20 @@ class Alpha_pinned_BM(Pinned_diffusion):
     @property
     def vol_double(self) -> float:
         return self._vol_double
+
     @vol_double.setter
     def vol_double(self, new_vol) -> None:
         self._vol_double = new_vol
 
     def _h(self, t) -> float:
-        if( t == self.T ):
+        if t == self.T:
             return 0
         else:
             return self.alpha / (self.T-t)
 
     def vol(self, t, x) -> float:
         return self.vol_double
+
 
 class F_pinned_BM(Pinned_diffusion):
     """Instantiate Ito_diffusion to simulate an F-pinned Brownian motion
@@ -597,38 +636,37 @@ class F_pinned_BM(Pinned_diffusion):
     of a probability distribution over [0,T]
     """
     def __init__(self,
-                 x0: float=0.0,
-                 T: float=1.0,
-                 scheme_steps: int=100,
-                 distr=None,
-                 pin: float=0.0,
-                 noise_params: defaultdict=defaultdict(int),
-                 jump_params: defaultdict=defaultdict(int),
-                ) -> None:
+                 x0: float = 0.0,
+                 T: float = 1.0,
+                 scheme_steps: int = 100,
+                 distr: None = None,
+                 pin: float = 0.0,
+                 noise_params: defaultdict = defaultdict(int),
+                 jump_params: defaultdict = defaultdict(int),
+                 ) -> None:
         super().__init__(x0=x0,
                          T=T,
                          scheme_steps=scheme_steps,
                          pin=pin,
                          noise_params=noise_params,
                          jump_params=jump_params,
-                        )
+                         )
         if not distr:
-            raise NameError( "Must specify a probability distribution" )
+            raise NameError('Must specify a probability distribution')
         else:
             self._distr = distr
             self._f = distr.pdf
             self._F = distr.cdf
 
     def _h(self, t) -> float:
-        if( t == self._T ):
+        if t == self._T:
             return 0
         else:
-            return self._f(t) / (1-self._F(t))
+            return self._f(t) / (1 - self._F(t))
 
     def vol(self, t, x) -> float:
         return np.sqrt(self._f(t))
 
-# Fractional Brownian Motion
 
 class FBM(BM):
     """Instantiate Ito_diffusion to simulate a drifted fractional Brownian motion
@@ -637,18 +675,18 @@ class FBM(BM):
     where drift, vol are real numbers
     """
     def __init__(self,
-                 x0: float=0.0,
-                 T: float=1.0,
-                 scheme_steps: int=100,
-                 drift: float=0.0,
-                 vol: float=1.0,
-                 H: float=1.0,
-                 method: str='vector',
-                 n_kl: int=100,
-                 barrier=None,
-                 barrier_condition=None,
-                 jump_params: defaultdict=defaultdict(int),
-                ) -> None:
+                 x0: float = 0.0,
+                 T: float = 1.0,
+                 scheme_steps: int = 100,
+                 drift: float = 0.0,
+                 vol: float = 1.0,
+                 H: float = 1.0,
+                 method: str = 'vector',
+                 n_kl: int = 100,
+                 barrier: None = None,
+                 barrier_condition: None = None,
+                 jump_params: defaultdict = defaultdict(int),
+                 ) -> None:
 
         noise_params = {
             'type': 'fgaussian',
@@ -664,11 +702,12 @@ class FBM(BM):
                          barrier=barrier,
                          barrier_condition=barrier_condition,
                          noise_params=noise_params,
-                        )
+                         )
 
     @property
     def H(self) -> float:
         return self.noise._H
+
     @H.setter
     def H(self, new_H) -> None:
         self.noise_params['H'] = new_H
@@ -677,6 +716,7 @@ class FBM(BM):
     @property
     def n_kl(self) -> int:
         return self.noise._n_kl
+
     @n_kl.setter
     def n_kl(self, new_n_kl) -> None:
         self.noise_params['n_kl'] = new_n_kl
@@ -685,12 +725,12 @@ class FBM(BM):
     @property
     def method(self) -> float:
         return self.noise._method
+
     @method.setter
     def method(self, new_method) -> None:
         self.noise_params['method'] = new_method
         self.noise.method = new_method
 
-# Jump diffusions
 
 class Levy(Ito_diffusion_1d):
     """Instantiate Ito_diffusion to simulate a Levy process
@@ -698,21 +738,21 @@ class Levy(Ito_diffusion_1d):
     where drift and vol are real numbers
     """
     def __init__(self,
-                 x0: float=0.0,
-                 T: float=1.0,
-                 scheme_steps: int=100,
-                 drift: float=0.0,
-                 vol: float=1.0,
-                 barrier=None,
-                 barrier_condition=None,
-                 noise_params: defaultdict=defaultdict(int),
-                 jump_intensity: float=1.0,
-                 jump_size_distr=None,
-                ) -> None:
+                 x0: float = 0.0,
+                 T: float = 1.0,
+                 scheme_steps: int = 100,
+                 drift: float = 0.0,
+                 vol: float = 1.0,
+                 barrier: None = None,
+                 barrier_condition: None = None,
+                 noise_params: defaultdict = defaultdict(float),
+                 jump_intensity: float = 1.0,
+                 jump_size_distr: None = None,
+                 ) -> None:
 
         self._jump_intensity = jump_intensity
         jump_params = {
-            'jump_intensity_func': lambda t,x: jump_intensity,
+            'jump_intensity_func': lambda t, x: jump_intensity,
             'jump_size_distr': jump_size_distr,
         }
 
@@ -723,21 +763,23 @@ class Levy(Ito_diffusion_1d):
                          barrier_condition=barrier_condition,
                          noise_params=noise_params,
                          jump_params=jump_params,
-                        )
+                         )
         self._drift_double = np.float(drift)
         self._vol_double = np.float(vol)
 
     @property
     def jump_intensity(self) -> float:
         return self._jump_intensity
+
     @jump_intensity.setter
-    def jump_intensity(self, new_jump_intensity) -> None:
-        self._jump_intensity = new_jump_intensity
-        self.jump_params['jump_intensity_func'] = lambda t,x: new_jump_intensity
+    def jump_intensity(self, new_jump_int) -> None:
+        self._jump_intensity = new_jump_int
+        self.jump_params['jump_intensity_func'] = lambda t, x: new_jump_int
 
     @property
     def jump_size_distr(self) -> float:
         return self.jump_params['jump_size_distr']
+
     @jump_size_distr.setter
     def jump_size_distr(self, new_jump_size_distr) -> None:
         self.jump_params['jump_size_distr'] = new_jump_size_distr
@@ -745,6 +787,7 @@ class Levy(Ito_diffusion_1d):
     @property
     def drift_double(self) -> float:
         return self._drift_double
+
     @drift_double.setter
     def drift_double(self, new_drift) -> None:
         self._drift_double = new_drift
@@ -752,6 +795,7 @@ class Levy(Ito_diffusion_1d):
     @property
     def vol_double(self) -> float:
         return self._vol_double
+
     @vol_double.setter
     def vol_double(self, new_vol) -> None:
         self._vol_double = new_vol
@@ -762,36 +806,36 @@ class Levy(Ito_diffusion_1d):
     def vol(self, t, x) -> float:
         return self.vol_double
 
-# Multifractal diffusions
 
 class Lognormal_multifractal():
     """Simulate a lognormal multifractal cascade process
     X_t = lim_{l->0+} int_0^t exp(w_l,T(u))dW_u
-    where w_l,T(u) is a gaussian process with known mean and covariance functions.
-    This is approximated by discretization of dX_t = exp(w_l,T(t))dW_t for a small
-    value of l.
+    where w_l,T(u) is a gaussian process with known mean and covariance
+    functions. This is approximated by discretization of
+    dX_t = exp(w_l,T(t))dW_t for a small value of l.
     """
     def __init__(self,
-                 x0: float=0.0,
-                 T: float=1.0,
-                 scheme_step: float=0.01,
-                 intermittency: float=0.01,
-                 integral_scale: float=1.0,
-                 l=None
-                ) -> None:
+                 x0: float = 0.0,
+                 T: float = 1.0,
+                 scheme_step: float = 0.01,
+                 intermittency: float = 0.01,
+                 integral_scale: float = 1.0,
+                 l_param: None = None,
+                 ) -> None:
         self._x0 = np.float(x0)
         self._T = np.float(T)
         self._scheme_step = np.float(scheme_step)
         self._intermittency = np.float(intermittency)
         self._integral_scale = np.float(integral_scale)
 
-        if not l:
-            l = self._scheme_step / 128
-        self._l = l
+        if l_param is None:
+            l_param = self._scheme_step / 128
+        self._l_param = l_param
 
     @property
     def x0(self) -> float:
         return self._x0
+
     @x0.setter
     def x0(self, new_x0) -> None:
         self.omega_simulate.cache_clear()
@@ -800,6 +844,7 @@ class Lognormal_multifractal():
     @property
     def T(self) -> float:
         return self._T
+
     @T.setter
     def T(self, new_T) -> None:
         self.omega_simulate.cache_clear()
@@ -808,6 +853,7 @@ class Lognormal_multifractal():
     @property
     def scheme_step(self) -> float:
         return self._scheme_step
+
     @scheme_step.setter
     def scheme_step(self, new_scheme_step) -> None:
         self.omega_simulate.cache_clear()
@@ -816,6 +862,7 @@ class Lognormal_multifractal():
     @property
     def intermittency(self) -> float:
         return self._intermittency
+
     @intermittency.setter
     def intermittency(self, new_intermittency) -> None:
         self.omega_simulate.cache_clear()
@@ -824,42 +871,49 @@ class Lognormal_multifractal():
     @property
     def integral_scale(self) -> float:
         return self._integral_scale
+
     @integral_scale.setter
     def integral_scale(self, new_integral_scale) -> None:
         self.omega_simulate.cache_clear()
         self._integral_scale = new_integral_scale
 
     @property
-    def l(self):
-        return self._l
-    @l.setter
-    def l(self, new_l):
+    def l_param(self):
+        return self._l_param
+
+    @l_param.setter
+    def l_param(self, new_l):
         self.omega_simulate.cache_clear()
-        self._l = new_l
+        self._l_param = new_l
 
     @property
     def l_sqrt(self):
-        return np.sqrt(self.l)
+        return np.sqrt(self.l_param)
 
     @property
     def time_steps(self) -> list:
-        return [step*self.l for step in range(self.scheme_steps+1)]
+        return [step * self.l_param for step in range(self.scheme_steps + 1)]
 
     @property
     def scheme_steps(self) -> float:
-        return np.floor(self.T / self.l).astype('int')
+        return np.floor(self.T / self.l_param).astype('int')
 
     def expectation(self) -> float:
-        return -self.intermittency**2 * (np.log(self.integral_scale / self.l) - 1)
+        return -self.intermittency ** 2 * (
+            np.log(self.integral_scale / self.l_param) - 1
+            )
 
     def covariance(self, tau) -> float:
         if self.integral_scale <= tau:
             return 0
-        elif tau < self.integral_scale and tau >= self.l:
+        elif tau < self.integral_scale and tau >= self.l_param:
             return self.intermittency ** 2 * np.log(self.integral_scale / tau)
         else:
-            return self.intermittency ** 2 * (np.log(self.integral_scale / self.l)
-                                              + 1 - tau / self.l)
+            return self.intermittency ** 2 * (
+                np.log(
+                    self.integral_scale / self.l_param
+                    ) + 1 - tau / self.l_param
+                )
 
     def covariance_matrix(self) -> np.ndarray:
         cov = np.zeros((self.scheme_steps, self.scheme_steps))
@@ -872,7 +926,10 @@ class Lognormal_multifractal():
 
     @lru_cache(maxsize=None)
     def omega_simulate(self) -> np.ndarray:
-        return rd.multivariate_normal(self.expectation() * np.ones((self.scheme_steps,)),                                      self.covariance_matrix())
+        return rd.multivariate_normal(
+            self.expectation() * np.ones((self.scheme_steps,)),
+            self.covariance_matrix()
+            )
 
     def MRM(self) -> list:
         """Multifractal Random Measure
@@ -881,7 +938,7 @@ class Lognormal_multifractal():
         x = [last_step]
         omega = self.omega_simulate()
         for n in range(1, self.scheme_steps):
-            last_step += self.l * np.exp(2 * omega[n - 1])
+            last_step += self.l_param * np.exp(2 * omega[n - 1])
             x.append(last_step)
 
     def simulate(self) -> pd.DataFrame:

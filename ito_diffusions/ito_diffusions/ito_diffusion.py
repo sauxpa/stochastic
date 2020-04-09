@@ -1,32 +1,26 @@
-#!/usr/bin/env python
-# coding: utf-8
-
 import numpy as np
 import abc
 from collections import defaultdict
 from .noise import Fractional_Gaussian_Noise
 
-# ## Generic Ito diffusion
-# 𝑑𝑋𝑡=𝑏(𝑡,𝑋𝑡)𝑑𝑡+𝜎(𝑡,𝑋𝑡)𝑑𝑊𝑡.
-#
-# Supports standard gaussian noise and fractional gaussian noise.
 
 class Ito_diffusion(abc.ABC):
     """Generic class for Ito diffusion
     dX_t = b(t,X_t)dt + sigma(t,X_t)*dW_t
     with a potential boundary condition at barrier.
+    Supports standard gaussian noise and fractional gaussian noise
     Typical example : barrier=0, barrier_condition='absorb'
     (only this one is supported for now)
     """
     def __init__(self,
-                 x0: float=0.0,
-                 T: float=1.0,
-                 scheme_steps: int=100,
-                 barrier=None,
-                 barrier_condition=None,
-                 noise_params: defaultdict=defaultdict(int),
-                 jump_params: defaultdict=defaultdict(int),
-                ) -> None:
+                 x0: float = 0.0,
+                 T: float = 1.0,
+                 scheme_steps: int = 100,
+                 barrier: None = None,
+                 barrier_condition: None = None,
+                 noise_params: defaultdict = defaultdict(float),
+                 jump_params: defaultdict = defaultdict(float),
+                 ) -> None:
         self._x0 = x0
         self._T = T
         self._scheme_steps = scheme_steps
@@ -56,6 +50,7 @@ class Ito_diffusion(abc.ABC):
     @property
     def x0(self) -> float:
         return self._x0
+
     @x0.setter
     def x0(self, new_x0: float) -> None:
         self._x0 = new_x0
@@ -63,6 +58,7 @@ class Ito_diffusion(abc.ABC):
     @property
     def T(self) -> float:
         return self._T
+
     @T.setter
     def T(self, new_T) -> None:
         self._T = new_T
@@ -70,6 +66,7 @@ class Ito_diffusion(abc.ABC):
     @property
     def scheme_steps(self) -> int:
         return self._scheme_steps
+
     @scheme_steps.setter
     def scheme_steps(self, new_scheme_steps) -> None:
         self._scheme_steps = new_scheme_steps
@@ -83,26 +80,34 @@ class Ito_diffusion(abc.ABC):
                 n_kl=self._noise_params.get('n_kl', 100),
                 method=self._noise_params.get('method', 'vector')
                )
+
     @property
     def barrier(self):
         return self._barrier
+
     @barrier.setter
     def barrier(self, new_barrier):
         self._barrier = new_barrier
 
     @property
     def barrier_condition(self):
-        if self._barrier_condition not in [ None, 'absorb']:
-            raise NameError("Unsupported barrier condition : {}".format(self._barrier_condition))
+        if self._barrier_condition not in [None, 'absorb']:
+            raise NameError(
+                'Unsupported barrier condition : {}'.format(
+                    self._barrier_condition
+                    )
+                )
         else:
             return self._barrier_condition
+
     @barrier_condition.setter
     def barrier_condition(self, new_barrier_condition):
-        self._barrier_condition = barrier_condition
+        self._barrier_condition = new_barrier_condition
 
     @property
     def noise_params(self) -> defaultdict:
         return self._noise_params
+
     @noise_params.setter
     def noise_params(self, new_noise_params) -> None:
         self._noise_params = new_noise_params
@@ -142,13 +147,14 @@ class Ito_diffusion(abc.ABC):
     @property
     def jump_params(self) -> defaultdict:
         return self._jump_params
+
     @jump_params.setter
     def jump_params(self, new_jump_params) -> None:
         self._jump_params = new_jump_params
 
     @property
     def has_jumps(self):
-        return len(self.jump_params)>0
+        return len(self.jump_params) > 0
 
     @property
     def jump_intensity_func(self):
@@ -177,7 +183,9 @@ class Ito_diffusion(abc.ABC):
     def barrier_crossed(self, x, y, barrier) -> bool:
         """barrier is crossed if x and y are on each side of the barrier
         """
-        return (x<=barrier and y>=barrier) or (x>=barrier and y<=barrier)
+        return (
+            (x <= barrier and y >= barrier) or (x >= barrier and y <= barrier)
+        )
 
     @abc.abstractmethod
     def drift(self, t, x):
