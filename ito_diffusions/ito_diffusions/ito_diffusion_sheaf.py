@@ -77,7 +77,8 @@ class Ito_diffusion_sheaf(Ito_diffusion):
         gaussian_inc = rd.randn(self.scheme_steps)
         for n in range(self.n_paths):
             last_step = self.x0
-            x = [last_step]
+            x = np.empty(self.scheme_steps+1)
+            x[0] = last_step
             for i, t in enumerate(self.time_steps[1:]):
                 z = rd.randn() * self.path_noise_stddev
                 previous_step = last_step
@@ -94,7 +95,7 @@ class Ito_diffusion_sheaf(Ito_diffusion):
                         self.barrier)):
                     last_step = self.barrier
 
-                x.append(last_step)
+                x[i + 1] = last_step
             paths['path {}'.format(n)] = x
 
         df = pd.DataFrame(paths)

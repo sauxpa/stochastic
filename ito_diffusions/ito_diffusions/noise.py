@@ -151,7 +151,8 @@ class Fractional_Gaussian_Noise():
         """fBM samples are simulated using a Karhunen-Loeve expansion
         (see https://projecteuclid.org/download/pdf_1/euclid.ejp/1464816842).
         """
-        cum_noise = []
+        # cum_noise = []
+        cum_noise = np.empty(self.scheme_steps)
         if self.H <= 0.5:
             raise ValueError('H<=0.5 is not supported for KL method.')
         elif self.H > 0.5:
@@ -160,15 +161,18 @@ class Fractional_Gaussian_Noise():
             gauss_0 = rd.randn()
             # the below is memoized
             a = self.coeff_kl()
-            for t in self.time_steps:
-                i_range = np.array(range(1, self.n_kl+1))*np.pi*t/self.T
-                sx = np.multiply((1-np.cos(i_range)), gauss_x)
+            for i, t in enumerate(self.time_steps):
+                i_range = np.array(
+                    range(1, self.n_kl + 1)
+                    ) * np.pi * t / self.T
+                sx = np.multiply((1 - np.cos(i_range)), gauss_x)
                 sy = np.multiply(np.sin(i_range), gauss_y)
-                s = a[0]*t/self.T*gauss_0 + np.dot(a[1:], sx+sy)
-                cum_noise.append(s)
+                s = a[0] * t / self.T * gauss_0 + np.dot(a[1:], sx + sy)
+                cum_noise[i] = s
         # cast to numpy and rescale
-        cum_noise = np.array(cum_noise) * self.T ** self.H
-        return cum_noise[1:]-cum_noise[:-1]
+        # cum_noise = np.array(cum_noise) * self.T ** self.H
+        cum_noise = cum_noise * self.T ** self.H
+        return cum_noise[1:] - cum_noise[:-1]
 
     def simulate(self) -> np.ndarray:
         """Returns increments of the fBM.

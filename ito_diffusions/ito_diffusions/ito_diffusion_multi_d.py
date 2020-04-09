@@ -48,8 +48,10 @@ class Ito_diffusion_multi_d(Ito_diffusion):
         """Euler-Maruyama scheme
         """
         last_step = self.x0
-        x = [last_step]
-        for t in self.time_steps[1:]:
+        x = np.empty((self.scheme_steps + 1, self.d))
+        x[0, :] = last_step
+
+        for i, t in enumerate(self.time_steps[1:]):
             # z drawn for a N(0_d,1_d)
             previous_step = last_step
             z = rd.randn(self._n_factors)
@@ -59,17 +61,16 @@ class Ito_diffusion_multi_d(Ito_diffusion):
             last_step = last_step + inc
 
             if self.barrier_condition == 'absorb':
-                for i, coord in enumerate(last_step):
-                    if (self.barrier[i] is not None
+                for j, coord in enumerate(last_step):
+                    if (self.barrier[j] is not None
                         and self.barrier_crossed(
-                            previous_step[i],
+                            previous_step[j],
                             coord,
-                            self.barrier[i]
+                            self.barrier[j]
                             )):
-                        last_step[i] = self.barrier[i]
-            x.append(last_step)
+                        last_step[j] = self.barrier[j]
+            x[i + 1, :] = last_step
 
-        x = np.array(x)
         df_dict = dict()
         for i, key in enumerate(self._keys):
             df_dict[key] = x[:, i]
@@ -496,11 +497,11 @@ class SABR_tanh(Ito_diffusion_multi_d):
         self._shift = float(new_shift)
 
     @property
-    def l(self) -> float:
+    def l(self) -> float:  # noqa
         return self._l
 
     @l.setter
-    def l(self, new_l: float) -> None:
+    def l(self, new_l: float) -> None:  # noqa
         self._l = float(new_l)
 
     @property

@@ -30,7 +30,8 @@ class Ito_diffusion_1d(Ito_diffusion):
         """Euler-Maruyama scheme
         """
         last_step = self.x0
-        x = [last_step]
+        x = np.empty(self.scheme_steps + 1)
+        x[0] = last_step
 
         if self.noise_type == 'fgaussian':
             noises = self.noise.simulate()
@@ -58,7 +59,7 @@ class Ito_diffusion_1d(Ito_diffusion):
                                          self.barrier)):
                 last_step = self.barrier
 
-            x.append(last_step)
+            x[i + 1] = last_step
 
         df = pd.DataFrame({'spot': x})
         df.index = self.time_steps
