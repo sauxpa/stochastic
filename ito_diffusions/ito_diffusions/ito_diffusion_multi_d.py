@@ -181,6 +181,105 @@ class GBM_multi_d(Ito_diffusion_multi_d):
         return np.multiply(x, self.vol_matrix.T).T
 
 
+class Vasicek_multi_d(Ito_diffusion_multi_d):
+    """Instantiate Ito_diffusion to simulate a mean-reverting mutlivariate
+    correlated Vasicek diffusion:
+    dX_t = mean_reversion*(long_term-X_t)*dt + vol*dW_t
+    where mean_reversion, long_term and vol are real numbers.
+    """
+    def __init__(self,
+                 x0: np.ndarray = np.ones(1),
+                 T: float = 1.0,
+                 scheme_steps: int = 100,
+                 mean_reversion: np.ndarray = np.zeros(1),
+                 long_term: np.ndarray = np.zeros(1),
+                 vol: np.ndarray = np.zeros(1),
+                 keys: None = None,
+                 barrier: np.ndarray = np.full(1, None),
+                 barrier_condition: np.ndarray = np.full(1, None)
+                 ) -> None:
+
+        self._mean_reversion = np.array(mean_reversion)
+        self._long_term = np.array(long_term)
+        # vol is actually a covariance matrix here
+        self._vol_matrix = np.array(vol)
+        n_factors = self._vol_matrix.shape[1]
+        super().__init__(x0=x0,
+                         T=T,
+                         scheme_steps=scheme_steps,
+                         n_factors=n_factors,
+                         keys=keys,
+                         barrier=barrier,
+                         barrier_condition=barrier_condition
+                         )
+
+    @property
+    def mean_reversion(self) -> np.ndarray:
+        return self._mean_reversion
+
+    @mean_reversion.setter
+    def mean_reversion(self, new_mean_reversion: np.ndarray) -> None:
+        self._mean_reversion = new_mean_reversion
+
+    @property
+    def long_term(self) -> np.ndarray:
+        return self._long_term
+
+    @long_term.setter
+    def long_term(self, new_long_term: np.ndarray) -> None:
+        self._long_term = new_long_term
+
+    @property
+    def vol_matrix(self) -> np.ndarray:
+        return self._vol_matrix
+
+    @vol_matrix.setter
+    def vol_matrix(self, new_vol: np.ndarray) -> None:
+        self._vol_matrix = np.array(new_vol)
+
+    def drift(self, t, x: np.ndarray) -> np.ndarray:
+        return np.multiply(self.long_term - x, self.mean_reversion)
+
+    def vol(self, t, x: np.ndarray) -> np.ndarray:
+        return self.vol_matrix
+
+
+class BlackKarasinski_multi_d(Vasicek_multi_d):
+    """Instantiate Ito_diffusion to simulate a mean-reverting mutlivariate
+    correlated Black-Karasinski diffusion:
+    dlog(X_t) = mean_reversion*(long_term-log(X_t))*dt + vol*dW_t
+    where mean_reversion, long_term and vol are real numbers.
+    """
+    def __init__(self,
+                 x0: np.ndarray = np.ones(1),
+                 T: float = 1.0,
+                 scheme_steps: int = 100,
+                 mean_reversion: np.ndarray = np.zeros(1),
+                 long_term: np.ndarray = np.zeros(1),
+                 vol: np.ndarray = np.zeros(1),
+                 keys: None = None,
+                 barrier: np.ndarray = np.full(1, None),
+                 barrier_condition: np.ndarray = np.full(1, None)
+                 ) -> None:
+
+        super().__init__(x0=x0,
+                         T=T,
+                         scheme_steps=scheme_steps,
+                         mean_reversion=mean_reversion,
+                         long_term=long_term,
+                         vol=vol,
+                         keys=keys,
+                         barrier=barrier,
+                         barrier_condition=barrier_condition
+                         )
+
+    def simulate(self):
+        df = super().simulate()
+        for key in self._keys:
+            df[key] = np.exp(df[key])
+        return df
+
+
 class SABR(Ito_diffusion_multi_d):
     """Instantiate Ito_diffusion to simulate a SABR stochastic vol model
     dX_t = s_t*X_t^beta*dW_t
