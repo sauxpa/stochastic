@@ -10,8 +10,8 @@ Libraries for stochastic processes simulation and visualization including:
 * Multidimensional processes, stochastic volatility diffusions (SABR...)
 * Fractional Brownian motion, Karhunen-Loeve expansion, fractional diffusions
 
-**To install** : clone repo and pip install -e ito_diffusions/
-
+**To install** : pip install ito-diffusions
+https://pypi.org/project/ito-diffusions/
 
 <img src="./examples/ito_diffusions_examples/brownian_sheaf.png"
      style="float: left; margin-right: 10px;" />
