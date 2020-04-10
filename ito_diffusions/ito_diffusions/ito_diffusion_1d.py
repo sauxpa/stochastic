@@ -4,6 +4,8 @@ import pandas as pd
 import abc
 from functools import lru_cache
 from collections import defaultdict
+from scipy.stats import uniform
+from typing import Callable, Union
 from .ito_diffusion import Ito_diffusion
 
 
@@ -268,10 +270,10 @@ class SLN(Ito_diffusion_1d):
                  T: float = 1.0,
                  scheme_steps: int = 100,
                  drift: float = 0.0,
-                 sigma: float = 0.0,
+                 sigma: float = 1.0,
                  shift: float = 0.0,
                  mixing: float = 0.0,
-                 L: float = 0.0,
+                 L: float = 1.0,
                  barrier: None = None,
                  barrier_condition: None = None,
                  noise_params: defaultdict = defaultdict(int),
@@ -717,7 +719,7 @@ class FBM(BM):
                  scheme_steps: int = 100,
                  drift: float = 0.0,
                  vol: float = 1.0,
-                 H: float = 1.0,
+                 H: float = 0.5,
                  method: str = 'vector',
                  n_kl: int = 100,
                  barrier: None = None,
@@ -784,10 +786,11 @@ class Levy(Ito_diffusion_1d):
                  barrier_condition: None = None,
                  noise_params: defaultdict = defaultdict(float),
                  jump_intensity: float = 1.0,
-                 jump_size_distr: None = None,
+                 jump_size_distr: Union[float, Callable] = None,
                  ) -> None:
 
         self._jump_intensity = jump_intensity
+        jump_size_distr = self._num_to_callable_distr(jump_size_distr)
         jump_params = {
             'jump_intensity_func': lambda t, x: jump_intensity,
             'jump_size_distr': jump_size_distr,
@@ -813,12 +816,25 @@ class Levy(Ito_diffusion_1d):
         self._jump_intensity = new_jump_int
         self.jump_params['jump_intensity_func'] = lambda t, x: new_jump_int
 
+    def _num_to_callable_distr(self, x: Union[float, Callable]) -> Callable:
+        """Jump size distribution is required to be a callable (cf. simulate in
+        Ito_diffusion_1d). If the provided argument is numeric, return a Dirac
+        mass at the argument.
+        """
+        if type(x) in [float, int]:
+            return uniform(loc=x, scale=0.0)
+        else:
+            return x
+
     @property
     def jump_size_distr(self) -> float:
         return self.jump_params['jump_size_distr']
 
     @jump_size_distr.setter
-    def jump_size_distr(self, new_jump_size_distr) -> None:
+    def jump_size_distr(self,
+                        new_jump_size_distr: Union[float, Callable]
+                        ) -> None:
+        new_jump_size_distr = self._num_to_callable_distr(new_jump_size_distr)
         self.jump_params['jump_size_distr'] = new_jump_size_distr
 
     @property

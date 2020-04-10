@@ -34,15 +34,25 @@ class Ito_diffusion_multi_d(Ito_diffusion):
                          barrier=barrier,
                          barrier_condition=barrier_condition
                          )
-
-        if not keys:
-            keys = ['dim {}'.format(i) for i in range(self.d)]
-        self._keys = keys
+        self._keys = self._check_keys(keys)
         self._n_factors = n_factors
 
     @property
     def d(self) -> int:
         return len(self.x0)
+
+    def _check_keys(self, keys: list) -> list:
+        if not keys:
+            keys = ['dim_{}'.format(i) for i in range(self.d)]
+        return keys
+
+    @property
+    def keys(self) -> list:
+        return self._keys
+
+    @keys.setter
+    def keys(self, new_keys: list) -> None:
+        self._keys = self._check_keys(new_keys)
 
     def simulate(self) -> pd.DataFrame:
         """Euler-Maruyama scheme
@@ -72,7 +82,7 @@ class Ito_diffusion_multi_d(Ito_diffusion):
             x[i + 1, :] = last_step
 
         df_dict = dict()
-        for i, key in enumerate(self._keys):
+        for i, key in enumerate(self.keys):
             df_dict[key] = x[:, i]
         df = pd.DataFrame(df_dict)
         df.index = self.time_steps
@@ -193,7 +203,7 @@ class Vasicek_multi_d(Ito_diffusion_multi_d):
                  scheme_steps: int = 100,
                  mean_reversion: np.ndarray = np.zeros(1),
                  long_term: np.ndarray = np.zeros(1),
-                 vol: np.ndarray = np.zeros(1),
+                 vol: np.ndarray = np.eye(1),
                  keys: None = None,
                  barrier: np.ndarray = np.full(1, None),
                  barrier_condition: np.ndarray = np.full(1, None)
@@ -256,7 +266,7 @@ class BlackKarasinski_multi_d(Vasicek_multi_d):
                  scheme_steps: int = 100,
                  mean_reversion: np.ndarray = np.zeros(1),
                  long_term: np.ndarray = np.zeros(1),
-                 vol: np.ndarray = np.zeros(1),
+                 vol: np.ndarray = np.eye(1),
                  keys: None = None,
                  barrier: np.ndarray = np.full(1, None),
                  barrier_condition: np.ndarray = np.full(1, None)
@@ -275,7 +285,7 @@ class BlackKarasinski_multi_d(Vasicek_multi_d):
 
     def simulate(self):
         df = super().simulate()
-        for key in self._keys:
+        for key in self.keys:
             df[key] = np.exp(df[key])
         return df
 
@@ -537,17 +547,31 @@ class SABR_AS_loglogistic(Ito_diffusion_multi_d):
     def drift(self, t, x: np.ndarray) -> np.ndarray:
         return np.zeros_like(x)
 
+    @property
+    def alpha(self):
+        return self.mode / (
+            (
+                (self.beta - 1) / (self.beta + 1)
+            ) ** (1 - self.beta)
+        )
+
     def vol(self, t, x: np.ndarray) -> np.ndarray:
         """Project dB onto dW and an orhtogonal white noise dZ
         dB_t = rho*dW_t + sqrt(1-rho^2)*dZ_t
         """
         return np.array(
             [
-                [x[1] * np.exp(
-                    -self.c * np.log(
-                        (x[0] + self.shift) / self.K_max
-                        ) ** 2), 0],
-                [self.vov * x[1] * self.rho, self.vov * x[1] * self.rho_dual]
+                [
+                    x[1] * self.beta / self.alpha
+                    * ((x[0] + self.shift) / self.alpha) ** (self.beta - 1)
+                    / (1
+                       + ((x[0] + self.shift) / self.alpha) ** self.beta) ** 2,
+                    0
+                ],
+                [
+                    self.vov * x[1] * self.rho,
+                    self.vov * x[1] * self.rho_dual
+                ]
             ]
         )
 
