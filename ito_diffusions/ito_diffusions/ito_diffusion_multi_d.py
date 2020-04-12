@@ -276,7 +276,7 @@ class BlackKarasinski_multi_d(Vasicek_multi_d):
                          T=T,
                          scheme_steps=scheme_steps,
                          mean_reversion=mean_reversion,
-                         long_term=long_term,
+                         long_term=np.log(long_term),
                          vol=vol,
                          keys=keys,
                          barrier=barrier,

@@ -469,7 +469,7 @@ class CIR(Ito_diffusion_1d):
         return self.vol_double * np.sqrt(x)
 
 
-class BlackKarasinski(Vasicek):
+class BlackKarasinski(Ito_diffusion_1d):
     """Instantiate Ito_diffusion to simulate a mean-reverting Black-Karasinski
     diffusion:
     dlog(X_t) = mean_reversion*(long_term-log(X_t))*dt + vol*dW_t
@@ -491,7 +491,7 @@ class BlackKarasinski(Vasicek):
                          T,
                          scheme_steps,
                          mean_reversion=mean_reversion,
-                         long_term=long_term,
+                         long_term=np.log(long_term),
                          vol=vol,
                          barrier=barrier,
                          barrier_condition=barrier_condition,
