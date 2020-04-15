@@ -283,6 +283,14 @@ class BlackKarasinski_multi_d(Vasicek_multi_d):
                          barrier_condition=barrier_condition
                          )
 
+    @Vasicek_multi_d.long_term.setter
+    def long_term(self, new_long_term) -> None:
+        self._long_term = np.log(new_long_term)
+
+    @Vasicek_multi_d.x0.setter
+    def x0(self, new_x0: float) -> None:
+        self._x0 = np.log(new_x0)
+
     def simulate(self):
         df = super().simulate()
         for key in self.keys:
