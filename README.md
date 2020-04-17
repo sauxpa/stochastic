@@ -16,6 +16,10 @@ https://pypi.org/project/ito-diffusions/
 <img src="./examples/ito_diffusions_examples/brownian_sheaf.png"
      style="float: left; margin-right: 10px;" />
 
+### Schramm-Loewner Evolution (SLE)
+
+<img src="./sle/sle.png"
+     style="float: left; margin-right: 10px;" />
 
 ### ou_fitting
 Fit a Ornstein-Uhlenbeck process (potentially with Laplace jumps) on historical data using the generalized methods of moments on the characteristic functon.
