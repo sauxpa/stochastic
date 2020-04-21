@@ -16,6 +16,11 @@ https://pypi.org/project/ito-diffusions/
 <img src="./examples/ito_diffusions_examples/brownian_sheaf.png"
      style="float: left; margin-right: 10px;" />
 
+### Self-Avoiding Walks (SAW)
+
+<img src="./saw/saw_square.png"
+     style="float: left; margin-right: 10px;" />
+
 ### Schramm-Loewner Evolution (SLE)
 
 <img src="./sle/sle.png"
