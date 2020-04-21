@@ -19,12 +19,12 @@ https://pypi.org/project/ito-diffusions/
 
 ### Self-Avoiding Walks (SAW)
 
-<img src="./saw/saw_square.png"
+<img src="./examples/ito_diffusions_examples/saw_square.png"
      style="float: left; margin-right: 10px;" />
 
 ### Schramm-Loewner Evolution (SLE)
 
-<img src="./sle/sle.png"
+<img src="./examples/ito_diffusions_examples/sle.png"
      style="float: left; margin-right: 10px;" />
 
 ### ou_fitting
