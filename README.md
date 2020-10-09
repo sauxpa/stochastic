@@ -3,6 +3,9 @@
 ### bivariate_copula
 Code for simulating joint distribution based on a copula and empirical marginals.
 
+### ou_fitting
+Fit a Ornstein-Uhlenbeck process (potentially with Laplace jumps) on historical data using the generalized methods of moments on the characteristic functon.
+
 ### ito_diffusions_examples
 Libraries for stochastic processes simulation and visualization including:
 * Ito diffusion : Brownian motion, Geometric Brownian motion, Vasicek, CIR...
@@ -26,6 +29,3 @@ https://pypi.org/project/ito-diffusions/
 
 <img src="./examples/ito_diffusions_examples/sle.png"
      style="float: left; margin-right: 10px;" />
-
-### ou_fitting
-Fit a Ornstein-Uhlenbeck process (potentially with Laplace jumps) on historical data using the generalized methods of moments on the characteristic functon.
