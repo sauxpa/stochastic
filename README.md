@@ -1,5 +1,8 @@
 # stochastic
 
+### betting
+Small simulations on how to optimally bet in a biased environment.
+
 ### bivariate_copula
 Code for simulating joint distribution based on a copula and empirical marginals.
 
