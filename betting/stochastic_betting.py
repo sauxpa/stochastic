@@ -155,10 +155,8 @@ class ExactBellmanBet(Bet):
         coin: Type[Coin],
         p: float = 0.5,
         init_fortune: float = 100.0,
-        unit_bet=1.0,
     ):
         self._p = p
-        self._unit_bet = unit_bet
         super().__init__(coin=coin, init_fortune=init_fortune)
 
     @property
@@ -168,14 +166,6 @@ class ExactBellmanBet(Bet):
     @p.setter
     def p(self, new_p: float):
         self._p = new_p
-
-    @property
-    def unit_bet(self) -> float:
-        return self._unit_bet
-
-    @unit_bet.setter
-    def unit_bet(self, new_unit_bet: float):
-        self._unit_bet = new_unit_bet
 
     def strat(self, outcomes: pd.Series) -> pd.DataFrame:
         df = pd.DataFrame(data=outcomes, columns=['outcomes'])
@@ -191,6 +181,61 @@ class ExactBellmanBet(Bet):
         fortune = self.init_fortune
 
         for t, outcome in enumerate(outcomes):
+            sizes[t] = fraction * fortune
+            fortune *= 1 + fraction if which_side == outcome else 1 - fraction
+
+        df['bet'] = which_side
+        df['size'] = sizes
+
+        return df
+
+
+class EmpiricalBellmanBet(Bet):
+    """Same as exact Bellman but the parameter p is estimated on-the-fly
+    rather than known in advance, much like in a bandit context.
+    """
+    def __init__(
+        self,
+        coin: Type[Coin],
+        init_fortune: float = 100.0,
+        warmup_time: int = 1,
+    ):
+        self._warmup_time = warmup_time
+        super().__init__(coin=coin, init_fortune=init_fortune)
+
+    @property
+    def p(self) -> float:
+        return self._p
+
+    @p.setter
+    def p(self, new_p: float):
+        self._p = new_p
+
+    @property
+    def warmup_time(self) -> int:
+        return self._warmup_time
+
+    @warmup_time.setter
+    def warmup_time(self, new_warmup_time: int):
+        self._warmup_time = new_warmup_time
+
+    def strat(self, outcomes: pd.Series) -> pd.DataFrame:
+        df = pd.DataFrame(data=outcomes, columns=['outcomes'])
+
+        sizes = np.empty(len(outcomes))
+
+        fortune = self.init_fortune
+
+        for t, outcome in enumerate(outcomes):
+            if t < self.warmup_time:
+                p = 0.5
+            else:
+                p = outcomes.iloc[:t].mean()
+            # Which side seems biased?
+            which_side = p >= 0.5
+            # Bet a fraction of total fortune proportional
+            fraction = 2 * p - 1 if which_side else 2 * (1 - p) - 1
+
             sizes[t] = fraction * fortune
             fortune *= 1 + fraction if which_side == outcome else 1 - fraction
 
