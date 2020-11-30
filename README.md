@@ -6,6 +6,9 @@ Small simulations on how to optimally bet in a biased environment.
 ### bivariate_copula
 Code for simulating joint distribution based on a copula and empirical marginals.
 
+### concentration_bounds
+Numerical examples of various concentration bounds (Hoeffding, Bernstein...)
+
 ### ou_fitting
 Fit a Ornstein-Uhlenbeck process (potentially with Laplace jumps) on historical data using the generalized methods of moments on the characteristic functon.
 
