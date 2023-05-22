@@ -15,15 +15,19 @@ Fit a Ornstein-Uhlenbeck process (potentially with Laplace jumps) on historical 
 ### ito_diffusions_examples
 Libraries for stochastic processes simulation and visualization including:
 * Ito diffusion : Brownian motion, Geometric Brownian motion, Vasicek, CIR...
-* Jump processes : Ito diffusion driven by a Levy process i.e with a jump component with a given intensity and jump size distribution
-* Multidimensional processes, stochastic volatility diffusions (SABR...)
-* Fractional Brownian motion, Karhunen-Loeve expansion, fractional diffusions
-* Self-Avoiding Walks (SAW), Schramm-Loewner Evolution (SLE)...
+* Jump processes : Ito diffusion driven by a Levy process i.e with a jump component with a given intensity and jump size distribution;
+* Multidimensional processes, stochastic volatility diffusions (SABR...);
+* Fractional Brownian motion, Karhunen-Loeve expansion, fractional diffusions;
+* Times series models (AR, MA, ARMA, ARCH, GARCH, NAGARCH...);
+* Self-Avoiding Walks (SAW), Schramm-Loewner Evolution (SLE).
 
 **To install** : pip install ito-diffusions
 https://pypi.org/project/ito-diffusions/
 
 <img src="./examples/ito_diffusions_examples/brownian_sheaf.png"
+     style="float: left; margin-right: 10px;" />
+
+<img src="./examples/ito_diffusions_examples/nagarch.png"
      style="float: left; margin-right: 10px;" />
 
 ### Self-Avoiding Walks (SAW)
